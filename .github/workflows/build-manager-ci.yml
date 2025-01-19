@@ -79,12 +79,12 @@ jobs:
         run: |
           if [ ! -z "${{ secrets.KEYSTORE }}" ]; then
             {
-              echo KEYSTORE_PASSWORD='${{ secrets.KEYSTORE_PASSWORD }}'
-              echo KEY_ALIAS='${{ secrets.KEY_ALIAS }}'
-              echo KEY_PASSWORD='${{ secrets.KEY_PASSWORD }}'
-              echo KEYSTORE_FILE='key.jks'
+              echo "KEYSTORE_PASSWORD='${{ secrets.KEYSTORE_PASSWORD }}'"
+              echo "KEY_ALIAS='${{ secrets.KEY_ALIAS }}'"
+              echo "KEY_PASSWORD='${{ secrets.KEY_PASSWORD }}'"
+              echo "KEYSTORE_FILE='key.jks'"
             } >> gradle.properties
-            printf "%s" "${{ secrets.KEYSTORE }}" | base64 -d > key.jks
+            echo ${{ secrets.KEYSTORE }} | base64 -d > key.jks
           fi
 
       - name: Setup Java
