@@ -29,39 +29,27 @@ jobs:
       target: ${{ matrix.target }}
       os: ${{ matrix.os }}
 
-  build-ksud_overlayfs:
+  build-ksud:
     needs: build-susfsd
     strategy:
       matrix:
         include:
           - target: aarch64-linux-android
             os: ubuntu-latest
-    uses: ./.github/workflows/ksud_overlayfs.yml
-    with:
-      target: ${{ matrix.target }}
-      os: ${{ matrix.os }}
-  
-  build-ksud_magic:
-    needs: build-ksud_overlayfs
-    strategy:
-      matrix:
-        include:
-          - target: aarch64-linux-android
-            os: ubuntu-latest
-    uses: ./.github/workflows/ksud_magic.yml
+    uses: ./.github/workflows/ksud.yml
     with:
       target: ${{ matrix.target }}
       os: ${{ matrix.os }}
 
   build-manager:
-    needs: build-ksud_magic
+    needs: build-ksud
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./manager
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -75,7 +63,7 @@ jobs:
             echo "UPLOAD=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Write key
+      - name: Write Key
         run: |
           if [ ! -z "${{ secrets.KEYSTORE }}" ]; then
             {
@@ -96,9 +84,6 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        
       - name: Download arm64 susfsd
         uses: actions/download-artifact@v4
         with:
@@ -143,19 +128,19 @@ jobs:
           chmod +x gradlew
           ./gradlew clean assembleRelease
 
-      - name: Upload build artifact
+      - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: manager
+          name: Manager
           path: manager/app/build/outputs/apk/release/*.apk
 
-      - name: Upload mappings
+      - name: Upload Mappings
         uses: actions/upload-artifact@v4
         with:
-          name: "mappings"
-          path: "manager/app/build/outputs/mapping/release/"
+          name: Mappings
+          path: manager/app/build/outputs/mapping/release/
 
-      - name: Bot session cache
+      - name: Bot Session Cache
         if: steps.need_upload.outputs.UPLOAD == 'true'
         id: bot_session_cache
         uses: actions/cache@v4
@@ -163,7 +148,7 @@ jobs:
           path: scripts/ksunextbot.session
           key: ${{ runner.os }}-bot-session
 
-      - name: Upload to telegram
+      - name: Upload to Telegram
         if: steps.need_upload.outputs.UPLOAD == 'true'
         env:
           API_ID: ${{ secrets.API_ID }}
