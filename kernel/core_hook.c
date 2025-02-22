@@ -312,6 +312,24 @@ int ksu_handle_rename(struct dentry *old_dentry, struct dentry *new_dentry)
 	return 0;
 }
 
+static void nuke_ext4_sysfs() {
+	struct path path;
+	int err = kern_path("/data/adb/modules", 0, &path);
+	if (err) {
+		pr_err("nuke path err: %d\n", err);
+		return;
+	}
+
+	struct super_block* sb = path.dentry->d_inode->i_sb;
+	const char* name = sb->s_type->name;
+	if (strcmp(name, "ext4") != 0) {
+		pr_info("nuke but module aren't mounted\n");
+		return;
+	}
+
+	ext4_unregister_sysfs(sb);
+}
+
 int ksu_handle_prctl(int option, unsigned long arg2, unsigned long arg3,
 		     unsigned long arg4, unsigned long arg5)
 {
@@ -409,6 +427,7 @@ int ksu_handle_prctl(int option, unsigned long arg2, unsigned long arg3,
 		case EVENT_MODULE_MOUNTED: {
 			ksu_module_mounted = true;
 			pr_info("module mounted!\n");
+			nuke_ext4_sysfs();
 			break;
 		}
 		default:
@@ -994,6 +1013,30 @@ out_ksu_try_umount:
 	// try umount hosts file
 	ksu_try_umount("/system/etc/hosts", false, MNT_DETACH);
 #endif
+
+	// try umount lsposed dex2oat bins
+	try_umount("/apex/com.android.art/bin/dex2oat64", false, MNT_DETACH);
+	try_umount("/apex/com.android.art/bin/dex2oat32", false, MNT_DETACH);
+
+	// try umount pixelify gphotos spoof configs
+	try_umount("/system/etc/sysconfig/pixel_2017_exclusive.xml", false, MNT_DETACH);
+	try_umount("/system/etc/sysconfig/pixel_2018_exclusive.xml", false, MNT_DETACH);
+	try_umount("/system/etc/sysconfig/pixel_2019_exclusive.xml", false, MNT_DETACH);
+	try_umount("/product/etc/sysconfig/pixel_2016_exclusive.xml", false, MNT_DETACH);
+	try_umount("/product/etc/sysconfig/pixel_2017_exclusive.xml", false, MNT_DETACH);
+	try_umount("/product/etc/sysconfig/pixel_2018_exclusive.xml", false, MNT_DETACH);
+	try_umount("/product/etc/sysconfig/pixel_2019_exclusive.xml", false, MNT_DETACH);
+	try_umount("/product/etc/sysconfig/pixel_experience_2017.xml", false, MNT_DETACH);
+	try_umount("/product/etc/sysconfig/pixel_experience_2018.xml", false, MNT_DETACH);
+	try_umount("/product/etc/sysconfig/pixel_experience_2019.xml", false, MNT_DETACH);
+	try_umount("/product/etc/sysconfig/pixel_experience_2019_midyear.xml", false, MNT_DETACH);
+	try_umount("/product/etc/sysconfig/pixel_experience_2020.xml", false, MNT_DETACH);
+	try_umount("/product/etc/sysconfig/pixel_experience_2020_midyear.xml", false, MNT_DETACH);
+	try_umount("/product/etc/sysconfig/pixel_experience_2021.xml", false, MNT_DETACH);
+	try_umount("/product/etc/sysconfig/pixel_experience_2021_midyear.xml", false, MNT_DETACH);
+	try_umount("/product/etc/sysconfig/pixel_experience_2022.xml", false, MNT_DETACH);
+	try_umount("/product/etc/sysconfig/pixel_experience_2022_midyear.xml", false, MNT_DETACH);
+	try_umount("/product/etc/sysconfig/pixelify_experience.xml", false, MNT_DETACH);
 
 	return 0;
 }
